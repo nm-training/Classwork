@@ -91,3 +91,68 @@ adlb7 <- adlb6 |>
 
 # Exercise 10: Creating the Lab Grade
 
+
+
+adlb8 <- convert_blanks_to_na(adlb7) |> 
+  select(-c(PARAMCD, PARAM, PARAMN))
+
+param_lookup <- tribble(
+  ~LBTESTCD, ~PARAMCD,  ~PARAM,                                             ~PARAMN,
+  "ALP",     "ALP",   "Alkaline Phosphatase (mg/dL)",                       1,
+  "ALT",     "ALT",     "Alanine Aminotransferase (mg/dL)",                   2,
+  "AST",     "AST",     "Aspartate Aminotransferase (mmol/L)",                 3,
+  "BILI",    "BILI",    "Bilirubin (mg/dL)",                               4,
+  "CREAT",   "CREAT",    "Creatinine (mg/dL)",                             5,
+  "PH",      "PH",      "pH",                                               6,
+  "SODIUM",  "SODIUM",  "Sodium (mmol/L)",                                  7,
+  "WBC",     "WBC",     "Leukocytes (10^9/L)",                              8
+)
+
+
+adlb9 <- adlb8 |> 
+  derive_vars_merged_lookup(
+    dataset_add = param_lookup, 
+    by_vars = exprs(LBTESTCD), 
+    new_vars = exprs(PARAMCD, PARAM, PARAMN)
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+grade_lookup <- tibble::tribble(
+  ~PARAMCD, ~ATOXDSCL,                    ~ATOXDSCH,
+  "ALP",  NA_character_,                "Alkaline phosphatase increased",
+  "ALT",    NA_character_,                "Alanine aminotransferase increased",
+  "AST",    NA_character_,                "Aspartate aminotransferase increased",
+  "BILI",   NA_character_,                "Blood bilirubin increased",
+  "CREAT",  NA_character_,                "Creatinine increased",
+  "PH",        "Acidosis",                "Alkalosis",
+  "SODIUM", "Hyponatremia",               "Hypernatremia",
+  "WBC",    "White blood cell decreased", "Leukocytosis",
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
