@@ -2,6 +2,9 @@
 # copyright: © 2025. Unauthorized distribution or reuse prohibited.
 
 library(tidyverse)
+library(admiral)
+
+# install.packages("admiral")
 
 
 load(url("https://tinyurl.com/3bc8dcjv"))
@@ -58,9 +61,9 @@ adlb5 <- adlb4 |>
 
 adlb6 <- adlb5 |> 
   mutate(
-   ONTRTFL = if_else(
-     TRTSDT <= ADT & ADT <= TRTEDT, "Y", ""
-   )
+    ONTRTFL = if_else(
+      TRTSDT <= ADT & ADT <= TRTEDT, "Y", ""
+    )
   )
 
 # Exercise 7: Derive Baseline (ABLFL, BASE, BNRIND)
@@ -81,8 +84,6 @@ adlb7 <- adlb6 |>
 
 
 
-
-
 # Exercise 9: Derive Change from Baseline (CHG) and Percent Change from Baseline (PCHG), 
 
 
@@ -90,8 +91,6 @@ adlb7 <- adlb6 |>
 
 
 # Exercise 10: Creating the Lab Grade
-
-
 
 adlb8 <- convert_blanks_to_na(adlb7) |> 
   select(-c(PARAMCD, PARAM, PARAMN))
@@ -108,12 +107,75 @@ param_lookup <- tribble(
   "WBC",     "WBC",     "Leukocytes (10^9/L)",                              8
 )
 
-
 adlb9 <- adlb8 |> 
   derive_vars_merged_lookup(
     dataset_add = param_lookup, 
     by_vars = exprs(LBTESTCD), 
     new_vars = exprs(PARAMCD, PARAM, PARAMN)
+  )
+
+grade_lookup <- tibble::tribble(
+  ~PARAMCD, ~ATOXDSCL,                    ~ATOXDSCH,
+  "ALP",  NA_character_,                "Alkaline phosphatase increased",
+  "ALT",    NA_character_,                "Alanine aminotransferase increased",
+  "AST",    NA_character_,                "Aspartate aminotransferase increased",
+  "BILI",   NA_character_,                "Blood bilirubin increased",
+  "CREAT",  NA_character_,                "Creatinine increased",
+  "PH",        "Acidosis",                "Alkalosis",
+  "SODIUM", "Hyponatremia",               "Hypernatremia",
+  "WBC",    "White blood cell decreased", "Leukocytosis",
+)
+
+library(admiral)
+
+
+adlb10 <- adlb9 |> 
+  derive_vars_merged(
+    dataset_add = grade_lookup, 
+    by_vars = exprs(PARAMCD)
+  )
+
+adlb11 <- adlb10 |> 
+  derive_var_atoxgr_dir(
+    new_var = ATOXGRL, 
+    tox_description_var = ATOXDSCL,
+    meta_criteria = atoxgr_criteria_ctcv5, 
+    criteria_direction = "L", 
+    abnormal_indicator = "LOW", 
+    get_unit_expr = extract_unit(PARAM)
+  ) |> 
+  derive_var_atoxgr_dir(
+    new_var = ATOXGRH, 
+    tox_description_var = ATOXDSCH,
+    meta_criteria = atoxgr_criteria_ctcv5, 
+    criteria_direction = "H", 
+    abnormal_indicator = "HIGH", 
+    get_unit_expr = extract_unit(PARAM)
+  )
+
+adlb12 <- adlb11 |> 
+  group_by(USUBJID, PARAMCD) |> 
+  mutate(
+    BTOXGRL = if_else(ABLFL == "Y", ATOXGRL, NA), 
+    BTOXGRH = if_else(ABLFL == "Y", ATOXGRH, NA), 
+  ) |> 
+  fill(BTOXGRL, .direction = "updown") |> 
+  fill(BTOXGRH, .direction = "updown") |> 
+  ungroup()
+
+adlb13 <- adlb12 |> 
+  mutate(
+    ATOXGRHN = ATOXGRH, 
+    ATOXGRLN = ATOXGRL, 
+    BTOXGRHN = BTOXGRH, 
+    BTOXGRLN = BTOXGRL, 
+    ATOXGRH = str_c("Grade ", ATOXGRH), 
+    ATOXGRL = str_c("Grade ", ATOXGRL), 
+    BTOXGRL = str_c("Grade ", BTOXGRL), 
+    BTOXGRH = str_c("Grade ", BTOXGRH),
+    
+    WTOXGRL = if_else(is.na(ABLFL), "Y", NA),
+    WTOXGRH = if_else(is.na(ABLFL), "Y", NA)
   )
 
 
@@ -131,17 +193,13 @@ adlb9 <- adlb8 |>
 
 
 
-grade_lookup <- tibble::tribble(
-  ~PARAMCD, ~ATOXDSCL,                    ~ATOXDSCH,
-  "ALP",  NA_character_,                "Alkaline phosphatase increased",
-  "ALT",    NA_character_,                "Alanine aminotransferase increased",
-  "AST",    NA_character_,                "Aspartate aminotransferase increased",
-  "BILI",   NA_character_,                "Blood bilirubin increased",
-  "CREAT",  NA_character_,                "Creatinine increased",
-  "PH",        "Acidosis",                "Alkalosis",
-  "SODIUM", "Hyponatremia",               "Hypernatremia",
-  "WBC",    "White blood cell decreased", "Leukocytosis",
-)
+
+
+
+
+
+
+
 
 
 
