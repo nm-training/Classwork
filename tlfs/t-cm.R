@@ -66,26 +66,35 @@ tplyr_table(
   ) |> 
   build() |> 
   # select(2:4) |> 
-  select(row_label2,  var1_TRA25, var1_PLAC )
+  select(row_label2,  var1_TRA25, var1_PLAC)
   # arrange(desc(ord_layer_1), desc(ord_layer_2))
   
 
-final_table <- bind_rows(any_cm, adcm_table) 
+final_table <- bind_rows(any_cm |> add_row(), adcm_table) 
 
 
 names(final_table) <- c(
-  "ATC Class / Preferred Term", 
-  str_c("Treatment A", " (N=", total_c$TRA25, ")"), 
-  str_c("Placebo", " (N=", total_c$Placebo, ")")
+  "ATC Class \n Preferred Term", 
+  str_c("Treatment A \n", " (N=", total_c$TRA25, ")"), 
+  str_c("Placebo \n", " (N=", total_c$Placebo, ")")
 )
 
+# install.packages("r2rtf")
+
+library(r2rtf)
+
+final_table |> 
+  rtf_title("Table 2.1 Summary of Concomitant Medications \n Safety Population") |> 
+  rtf_body(
+    text_justification = c("l", "c", "c")
+  ) |> 
+  rtf_footnote("Note: WHODrug Global-B3 202003") |> 
+  rtf_encode() |> 
+  write_rtf("12_table_cm-main/t-cm.rtf")
+  
 
 
-
-
-
-
-
+## Break time
 
 
 
