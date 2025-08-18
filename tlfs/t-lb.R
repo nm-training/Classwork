@@ -14,22 +14,6 @@
 # **********  *************  *************************************
 #   
 # ********************************************************************************************************/
-# *******************************************************************************************************
-# Program Name:                 t-lb.R
-# Project:                      TRA-025
-# Purpose:                      Create Table of LB
-# Original Author:              Binod Jung Bogati (linkedin.com/in/bjungbogati)
-# Copyright:                    © 2025. Unauthorized distribution or reuse prohibited.
-# Date Created:                 8/12/2025
-# Parameters:                   NA
-#
-# Input:                        
-# Output:                       
-# Modifications:
-#   Date        By             Changes
-# **********  *************  *************************************
-#   
-# ********************************************************************************************************/
 
 library(tidyverse)
 library(Tplyr)
@@ -123,37 +107,3 @@ final_table |>
             border_last = "") |> 
   rtf_encode() |> 
   write_rtf("15_table_lb-main/t-lb.rtf")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
